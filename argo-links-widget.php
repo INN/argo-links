@@ -25,14 +25,14 @@ class argo_links_widget extends WP_Widget {
 			$query_args = array (
 				'post__not_in' 	=> get_option( 'sticky_posts' ),
 				'showposts' 	=> $instance['num_posts'],
-				'post_type' 	=> 'argolinks',
+				'post_type' 	=> 'rounduplink',
 				'post_status'	=> 'publish'
 			);
 			$my_query = new WP_Query( $query_args );
           		if ( $my_query->have_posts() ) {
           			while ( $my_query->have_posts() ) : $my_query->the_post();
           				$custom = get_post_custom($post->ID); ?>
-          				<?php if (get_post_type($post) === 'argolinkroundups') continue; ?>
+          				<?php if (get_post_type($post) === 'roundup') continue; ?>
 	                  	<div class="post-lead clearfix">
 	                      	<h5><?php echo ( isset( $custom["argo_link_url"][0] ) ) ? '<a href="' . $custom["argo_link_url"][0] . '">' . get_the_title() . '</a>' : get_the_title(); ?></h5>
 

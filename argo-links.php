@@ -1,21 +1,16 @@
 <?php
-
-/** Mailchimp API **/
-require_once(__DIR__ . '/vendor/mailchimp-api-php/src/Mailchimp.php');
-
-/**
-  * @package Argo_Links
-  * @version 0.01
-  */
 /*
 Plugin Name: Argo Links
 Plugin URI: https://github.com/argoproject/argo-links
 Description: The Argo Links Plugin
 Author: Project Argo, Mission Data
-Version: 1.00
+Version: 0.3
 Author URI:
 License: GPLv2
 */
+
+/** Mailchimp API **/
+require_once(__DIR__ . '/vendor/mailchimp-api-php/src/Mailchimp.php');
 
 /**
  * On activation, we'll set an option called 'argolinks_flush' to true,
@@ -68,6 +63,39 @@ function argo_flush_permalinks() {
 }
 
 /**
+ * Redirect all admin URLs containing 'post_type=argolinks' to the
+ * same url replaced with 'post_type=rounduplink'.
+ * 
+ * Used to be backwards compatible with old bookmarklets.
+ * 
+ * @since 0.3
+ */
+function redirect_argolinks_requests() {
+
+	// @see http://webcheatsheet.com/php/get_current_page_url.php
+	$pageURL = 'http';
+	if ($_SERVER["HTTPS"] == "on") {$pageURL .= "s";}
+		$pageURL .= "://";
+	if ($_SERVER["SERVER_PORT"] != "80") {
+		$pageURL .= $_SERVER["SERVER_NAME"].":".$_SERVER["SERVER_PORT"].$_SERVER["REQUEST_URI"];
+	} else {
+		$pageURL .= $_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
+	}
+
+	if( strpos($pageURL,'post_type=argolinks') ) {
+
+		$newURL = str_replace('post_type=argolinks','post_type=rounduplink',$pageURL);
+
+		// Header redirect
+		header( 'Location: ' . $newURL );
+		die();
+
+	}
+
+}
+add_action('admin_init','redirect_argolinks_requests');
+
+/**
  * Add a "Create MailChimp Campaign" button the post publish actions meta box.
  *
  * @since 0.2
@@ -75,7 +103,7 @@ function argo_flush_permalinks() {
 function argo_links_create_mailchimp_campaign_button() {
 	global $post;
 
-	if ($post->post_type !== 'argolinkroundups')
+	if ($post->post_type !== 'roundup')
 		return;
 
 	if ( false == get_option('argo_link_roundups_use_mailchimp_integration') || false == get_option('argo_link_roundups_mailchimp_api_key') )
@@ -129,7 +157,7 @@ function argo_links_enqueue_assets() {
 	wp_register_style('argo-links-common', $plugin_path . '/css/argo-links-common.css');
 
 	$screen = get_current_screen();
-	if ($screen->base == 'post' && $screen->post_type == 'argolinkroundups') {
+	if ($screen->base == 'post' && $screen->post_type == 'roundup') {
 		wp_enqueue_script('argo-link-roundups');
 		wp_enqueue_style('argo-links-common');
 	}
@@ -175,7 +203,7 @@ function argo_links_json_obj($add=array()) {
 
 function argo_links_add_modal_template() {
 	$screen = get_current_screen();
-	if ($screen->base == 'post' && $screen->post_type == 'argolinkroundups') {
+	if ($screen->base == 'post' && $screen->post_type == 'roundup') {
 		argo_links_modal_underscore_template();
 
 ?>
@@ -207,6 +235,9 @@ require_once('argo-this.php');
 ArgoLinkRoundups::init();
 ArgoLinks::init();
 add_action('init', 'argo_flush_permalinks', 99);
+
+
+require_once('inc/lroundups-update.php');
 
 /**
  * Fetches info from a pages <meta> tags and
